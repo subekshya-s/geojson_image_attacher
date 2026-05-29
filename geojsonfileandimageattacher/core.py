@@ -1,7 +1,8 @@
 import os
 import json
 from rapidfuzz import process,fuzz
-
+import logging
+logger = logging.getLogger(__name__)
 
 class GeoImageOrganizer:
     def __init__(self, input_geojson, image_folder, output_geojson,cutoff=75):
@@ -110,25 +111,24 @@ class GeoImageOrganizer:
 
             else:
                 feature["properties"]["image"] = None
-                feature["properties"]["images_match_score"] = 0
+                feature["properties"]["image_match_score"] = 0
                 unmatched.append(name)
 
         #report results
         total = len(data["features"])
         matched = total -len(unmatched)
 
-        print(f"\n Results: {matched}/{total} features matched")
+              
+        logger.info("Results: %d/%d features matched", matched, total)
 
         if unmatched:
-            print("\n No image found for:")
             for u in unmatched:
-                print(f"  - {u}")
-
+                logger.warning("No image found for: %s", u)
         else:
-            print("All features matched successfully!")   
+            logger.info("All features matched successfully!")
 
-        return data      
-
+        return data 
+    
     def save_output(self, data):
         """Save updated GeoJSON"""
         # Make sure output directory exists
@@ -139,7 +139,7 @@ class GeoImageOrganizer:
         with open(self.output_geojson, "w") as f:
             json.dump(data, f, indent=2)
 
-        print(f"\n Output saved to {self.output_geojson}")
+        logger.info("Output saved to %s", self.output_geojson)
 
   
     def run(self):
@@ -150,20 +150,7 @@ class GeoImageOrganizer:
         self.save_output(data)
 
 
-# ---------------- USER INPUT ---------------- #
-if __name__ == "__main__":
-    print(" GeoJSON Image Organizer")
 
-    input_geojson = input("Enter path to GeoJSON file: ")
-    image_folder = input("Enter path to image folder: ")
-    output_geojson = input("Enter output GeoJSON file name: ")
-
-    try :
-        organizer = GeoImageOrganizer(input_geojson,image_folder, output_geojson,)
-        organizer.run()
-
-    except (FileNotFoundError,ValueError) as e :
-        print(f"\n Error: {e}")
 
 
 
